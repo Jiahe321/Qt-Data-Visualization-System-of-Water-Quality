@@ -1,15 +1,4 @@
 #include "Window.hpp"
-#include "database.hpp"
-#include <QApplication>
-#include <QPushButton>
-#include <QStatusBar>
-#include <QTabWidget>
-#include <QVBoxLayout>
-#include <QTableView>
-#include <QToolBar>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <iostream>
 
 WaterSampleWindow::WaterSampleWindow(QWidget* parent)
     : QMainWindow(parent), dbFilePath("water_samples.db"), csvFilePath("") {
@@ -29,37 +18,52 @@ void WaterSampleWindow::createWidgets() {
     // Initialize TabWidget
     tabWidget = new QTabWidget();
 
-    // Initialize Buttons
-    loadCSVButton = new QPushButton("Load CSV");
+    // Set up central widget and layout
+    centralWidget = new QWidget();
+
+    // Initialize other page widgets
+    dataPage = new QWidget();
+    CD = new ComplianceDashboard(this);
+    PO = new PollutantOverview(this);
+    POPsTab = new POPs(this);
+    ELI = new EnvironmentalLitterIndicators(this);
+    FC = new FluorinatedCompounds(this);
 }
 
 void WaterSampleWindow::arrangeWidgets() {
-    // Set up central widget and layout
-    QWidget* centralWidget = new QWidget(this);
+    // Arrange central widget and layout
     centralWidget->setLayout(mainLayout);
     setCentralWidget(centralWidget);
 
     // Add TableView to a new tab
-    QWidget* dataPage = new QWidget();
-    QVBoxLayout* dataLayout = new QVBoxLayout(dataPage);
+    dataLayout = new QVBoxLayout(dataPage);
     dataLayout->addWidget(tableView);
     tabWidget->addTab(dataPage, "Data View");
 
+    // Other widgets wait to be done
+    tabWidget->addTab(CD, "Compliance Dashboard");
+    tabWidget->addTab(PO, "Pollutant Overview");
+    tabWidget->addTab(POPsTab, "Persistent Organic Pollutants (POPs)");
+    tabWidget->addTab(ELI, "Environmental Litter Indicators");
+    tabWidget->addTab(FC, "Fluorinated Compounds");
+
     // Add TabWidget to the main layout
     mainLayout->addWidget(tabWidget);
-
-    // Add a toolbar with Load CSV Button
-    QToolBar* toolbar = addToolBar("Main Toolbar");
-    toolbar->addWidget(loadCSVButton);
 
     // Set up status bar
     QStatusBar* statusBar = new QStatusBar(this);
     setStatusBar(statusBar);
     statusBar->showMessage("Ready");
+
+    // Create Menu Bar
+    fileMenu = menuBar()->addMenu("File");
+    loadCSVAction = new QAction("Load CSV", this);
+    fileMenu->addAction(loadCSVAction);
 }
 
 void WaterSampleWindow::connectSlots() {
-    connect(loadCSVButton, &QPushButton::clicked, this, &WaterSampleWindow::loadCSV);
+    // Connect Load CSV Action
+    connect(loadCSVAction, &QAction::triggered, this, &WaterSampleWindow::loadCSV);
 }
 
 void WaterSampleWindow::loadCSV() {
