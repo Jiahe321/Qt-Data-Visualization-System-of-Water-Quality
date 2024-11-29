@@ -16,14 +16,14 @@ My compiler did not report any errors. If your compiler reports an error, just m
 
 # Task to do
 ## This and next week:
--- Finish the layout of every page
--- Successfully provide some complete charts on some pages
--- Make One or two vedios for iterations.
+- Finish the layout of every page
+ Successfully provide some complete charts on some pages
+ Make One or two vedios for iterations.
   
 ## Remaining time:
--- The extra page linked to google map API.
--- Internationalisation
--- Remaining vedio(s)
--- Write the report
+- The extra page linked to google map API.
+- Internationalisation
+- Remaining vedio(s)
+- Write the report
 
 -- Write your log here --
