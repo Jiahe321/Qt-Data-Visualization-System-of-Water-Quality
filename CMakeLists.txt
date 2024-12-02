@@ -12,6 +12,7 @@ qt_standard_project_setup()
 # all .cpp file
 qt_add_executable(myapp
     database.cpp
+    methods.cpp
     ComplianceDashboard.cpp
     EnvironmentalLitterIndicators.cpp
     FluorinatedCompounds.cpp

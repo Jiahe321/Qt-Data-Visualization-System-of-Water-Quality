@@ -9,6 +9,7 @@
 // Data source
 #include "database.hpp"
 
+// Qt libs
 #include <QMainWindow>
 #include <QString>
 #include <QApplication>
@@ -21,11 +22,10 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QAction>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
 #include <iostream>
-
-class QTableView;
-class QVBoxLayout;
-class QTabWidget;
 
 class WaterSampleWindow : public QMainWindow {
     Q_OBJECT
@@ -34,19 +34,15 @@ public:
     WaterSampleWindow(QWidget* parent = nullptr);
 
 private:
-    // All widgets
-    QVBoxLayout* mainLayout;
-    QTableView* tableView;
-    QTabWidget* tabWidget;
+    // Data
     QString dbFilePath;
     QString csvFilePath;
 
+    // All common widgets
     QWidget* centralWidget;
-    QWidget* dataPage;
-    QVBoxLayout* dataLayout;
-
-    QMenu* fileMenu;
-    QAction* loadCSVAction;
+    QVBoxLayout* mainLayout;
+    QTableView* tableView;
+    QTabWidget* tabWidget;
 
     // Tabs
     ComplianceDashboard* CD;
@@ -55,10 +51,23 @@ private:
     EnvironmentalLitterIndicators* ELI;
     FluorinatedCompounds* FC;
 
+    // ²âÊÔËÑË÷¹¦ÄÜ
+    QVBoxLayout* dataLayout;
+    QWidget* dataPage;
+    QLineEdit* searchInput;
+
     void createWidgets();
     void arrangeWidgets();
     void connectSlots();
+    void setDataPage();
+    void setTabs();
+    void setStatusBarAndMenuBar();
 
 private slots:
     void loadCSV();
+    void searchData();
+
+signals:
+    // When data updated, tell other pages to update
+    void dbUpdated();
 };

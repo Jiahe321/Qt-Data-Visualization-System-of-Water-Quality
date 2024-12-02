@@ -13,15 +13,17 @@
 class WaterSampleDatabase {
 public:
     WaterSampleDatabase(const std::string& dbName);
-
-    void clearDatabase();
     bool createTable();
     bool readCSV(const std::string& filename);
-    bool insertBatchIntoDatabase(const std::vector<WaterSample>& samples);
-    QSqlTableModel* getTableModel(); // return a SQLTable to show data
-    // other methods waiting to be completed
+    // return a SQLTable to show data, defalt: query all data
+    QSqlTableModel* getTableModel(const QString& determinand = QString());
 
 private:
-    QSqlDatabase db;
+    void clearDatabase();
     bool stringToBool(const std::string& str);
+    bool insertBatchIntoDatabase(const std::vector<WaterSample>& samples);
+
+protected:
+    QSqlDatabase db;
 };
+// Other method in methods.hpp

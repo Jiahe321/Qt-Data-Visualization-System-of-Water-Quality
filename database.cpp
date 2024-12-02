@@ -142,14 +142,19 @@ bool WaterSampleDatabase::insertBatchIntoDatabase(const std::vector<WaterSample>
     return true;
 }
 
-QSqlTableModel* WaterSampleDatabase::getTableModel() {
-    // Query all data from the database and set up a Qt model for display
+QSqlTableModel* WaterSampleDatabase::getTableModel(const QString& determinand) {
     QSqlTableModel* model = new QSqlTableModel();
     model->setTable("water_samples");
+
+    // Search for certain row
+    if (!determinand.isEmpty()) {
+        model->setFilter(QString("determinandLabel = '%1'").arg(determinand));
+    }
+
+    // Load data
     model->select();
     return model;
 }
-
 
 // Change string isComplianceSample to bool
 bool WaterSampleDatabase::stringToBool(const std::string& str) {

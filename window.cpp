@@ -1,4 +1,4 @@
-#include "Window.hpp"
+#include "window.hpp"
 
 WaterSampleWindow::WaterSampleWindow(QWidget* parent)
     : QMainWindow(parent), dbFilePath("water_samples.db"), csvFilePath("") {
@@ -15,13 +15,12 @@ void WaterSampleWindow::createWidgets() {
     // Initialize TableView
     tableView = new QTableView();
 
-    // Initialize TabWidget
-    tabWidget = new QTabWidget();
-
     // Set up central widget and layout
     centralWidget = new QWidget();
 
-    // Initialize other page widgets
+    // Initialize Tab
+    tabWidget = new QTabWidget();
+
     dataPage = new QWidget();
     CD = new ComplianceDashboard(this);
     PO = new PollutantOverview(this);
@@ -35,35 +34,60 @@ void WaterSampleWindow::arrangeWidgets() {
     centralWidget->setLayout(mainLayout);
     setCentralWidget(centralWidget);
 
-    // Add TableView to a new tab
-    dataLayout = new QVBoxLayout(dataPage);
-    dataLayout->addWidget(tableView);
-    tabWidget->addTab(dataPage, "Data View");
+    setDataPage();
+    setTabs();
+    setStatusBarAndMenuBar();
+}
 
-    // Other widgets wait to be done
-    tabWidget->addTab(CD, "Compliance Dashboard");
+void WaterSampleWindow::setDataPage() {
+    // Add TableView to a new tab
+    QVBoxLayout* dataLayout = new QVBoxLayout(dataPage);
+
+    // ²âÊÔËÑË÷¹¦ÄÜ
+    QHBoxLayout* searchLayout = new QHBoxLayout();
+    QLabel* searchLabel = new QLabel("Search by Determinand Label:");
+    searchInput = new QLineEdit();
+    QPushButton* searchButton = new QPushButton("Search");
+    searchLayout->addWidget(searchLabel);
+    searchLayout->addWidget(searchInput);
+    searchLayout->addWidget(searchButton);
+
+    dataLayout->addLayout(searchLayout);
+
+    // Connect Search Button
+    connect(searchButton, &QPushButton::clicked, this, &WaterSampleWindow::searchData);
+
+    // Table
+    dataLayout->addWidget(tableView);
+}
+
+void WaterSampleWindow::setTabs() {
+    tabWidget->addTab(dataPage, "Data View");
     tabWidget->addTab(PO, "Pollutant Overview");
     tabWidget->addTab(POPsTab, "Persistent Organic Pollutants (POPs)");
     tabWidget->addTab(ELI, "Environmental Litter Indicators");
     tabWidget->addTab(FC, "Fluorinated Compounds");
+    tabWidget->addTab(CD, "Compliance Dashboard");
 
     // Add TabWidget to the main layout
     mainLayout->addWidget(tabWidget);
+}
 
-    // Set up status bar
+void WaterSampleWindow::setStatusBarAndMenuBar() {
+    // Create status bar
     QStatusBar* statusBar = new QStatusBar(this);
     setStatusBar(statusBar);
     statusBar->showMessage("Ready");
 
     // Create Menu Bar
-    fileMenu = menuBar()->addMenu("File");
-    loadCSVAction = new QAction("Load CSV", this);
+    QMenu* fileMenu = menuBar()->addMenu("File");
+    QAction* loadCSVAction = new QAction("Load CSV", this);
+    connect(loadCSVAction, &QAction::triggered, this, &WaterSampleWindow::loadCSV);
     fileMenu->addAction(loadCSVAction);
 }
 
 void WaterSampleWindow::connectSlots() {
-    // Connect Load CSV Action
-    connect(loadCSVAction, &QAction::triggered, this, &WaterSampleWindow::loadCSV);
+    // Wait to edit
 }
 
 void WaterSampleWindow::loadCSV() {
@@ -86,8 +110,26 @@ void WaterSampleWindow::loadCSV() {
     if (db.readCSV(csvFilePath.toStdString())) {
         tableView->setModel(db.getTableModel());
         statusBar()->showMessage("CSV data loaded successfully.");
+        // Inform other pages that the database has been updated
+        emit dbUpdated();
     }
     else {
         QMessageBox::critical(this, "Error", "Error loading CSV data.");
+    }
+}
+
+void WaterSampleWindow::searchData() {
+    QString filterLabel = searchInput->text(); // Get the input text for filtering
+    WaterSampleDatabase db(dbFilePath.toStdString());
+
+    // Get the filtered model
+    QSqlTableModel* filteredModel = db.getTableModel(filterLabel);
+
+    if (filteredModel) {
+        tableView->setModel(filteredModel); // Update the TableView with the filtered model
+        statusBar()->showMessage(filterLabel.isEmpty() ? "Showing all data" : "Filtered by: " + filterLabel);
+    }
+    else {
+        QMessageBox::warning(this, "Error", "No data found for the given filter.");
     }
 }

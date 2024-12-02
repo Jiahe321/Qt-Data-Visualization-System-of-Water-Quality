@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include "methods.hpp"
 
 class QVBoxLayout;
 class QLabel;
