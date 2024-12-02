@@ -1,17 +1,17 @@
 # Lin, updated at 2024/11/29
 
-# Notifications with some error
+## Notifications with some error
 There may be some capitalization issues. 
 I errorly write the `window.hpp` included in `main.cpp` and `window.cpp` as `Window.hpp`.
 My compiler did not report any errors. If your compiler reports an error, just modify the header file in those two cpp file.
 - I find this issue while using the Feng Linux machine. When I change this headers it can run successfully.
 
-# To Write Your Piece of Code
+## To Write Your Piece of Code
 - Modify the content in your `cpp` and `hpp`. Build a layout without slots first.
 - If you want more challenge and complete your page, add more methods to `database.hpp` and `database.cpp`, and connect your charts to those methods (slots) to show the data.
 - (Updated, see next log)You can also change other code in `database.cpp` and `sample.hpp` if you think some values' data type is hard to use. (For example, I store time in db as string but maybe a time stamp is better)
 
-# Other Notification
+## Other Notification
 - Write a log of the thing you have done in this document.
 
 # Task to do
@@ -27,7 +27,7 @@ My compiler did not report any errors. If your compiler reports an error, just m
 - Write the report
 
 # Lin, updated at 2024/12/2
-# Some changes
+## Some changes
 - `Data View` page can now search for certain determinand.
 - Add `methods.hpp` and `methods.cpp`. Now you can add query methods to those files instead of changing `database.hpp` or `cpp`.
 - Add a method `createPollutantTrendChart` into `Methods` class. Only show data in chart, need more change to meet the coursework requirement.
