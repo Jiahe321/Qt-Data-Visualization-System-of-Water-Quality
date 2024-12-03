@@ -30,7 +30,8 @@ void POPs::updateChart() {
         return;
     }
 
-    chartView = db->createPOPLevelsChart();
+    QString determinand = "PCBs";
+    chartView = db->createPOPLevelsChart(determinand);
 
    if (chartView) {
         layout()->addWidget(chartView); // 添加图表到布局

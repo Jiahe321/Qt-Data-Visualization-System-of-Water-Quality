@@ -177,20 +177,7 @@ QChartView* WaterSampleDatabase::createPollutantTrendChart(const QString& pollut
 
     // Create chart
     QChart* chart = new QChart();
-
     QLineSeries* lineSeries = new QLineSeries();
-
-    // Create and set X axis (DateTime axis)
-    QDateTimeAxis* axisX = new QDateTimeAxis();
-    axisX->setFormat("yyyy-MM-dd HH:mm:ss");
-    axisX->setTitleText("DateTime");
-    chart->addAxis(axisX, Qt::AlignBottom);
-    
-    // Create and set Y axis (Value axis)
-    QValueAxis* axisY = new QValueAxis();
-    axisY->setTitleText("Pollutant Level ( unit )");
-    axisY->setLabelFormat("%lf");
-    chart->addAxis(axisY, Qt::AlignLeft);
 
     // Query for data and add to series
     while (query.next()) {
@@ -203,8 +190,23 @@ QChartView* WaterSampleDatabase::createPollutantTrendChart(const QString& pollut
 
     // Add series to chart
     chart->addSeries(lineSeries);
+
+    chart->createDefaultAxes();
+    // Create and set X axis (DateTime axis)
+    /*
+    QDateTimeAxis* axisX = new QDateTimeAxis();
+    axisX->setFormat("yyyy-MM-dd HH:mm:ss");
+    axisX->setTitleText("DateTime");
+    chart->addAxis(axisX, Qt::AlignBottom);
+
+    // Create and set Y axis (Value axis)
+    QValueAxis* axisY = new QValueAxis();
+    axisY->setTitleText("Pollutant Level ( unit )");
+    axisY->setLabelFormat("%lf");
+    chart->addAxis(axisY, Qt::AlignLeft);
+
     lineSeries->attachAxis(axisX);
-    lineSeries->attachAxis(axisY);
+    lineSeries->attachAxis(axisY);*/
 
     // Set chart title
     chart->setTitle("Pollutant Trend: " + pollutantName);
@@ -226,4 +228,52 @@ QColor WaterSampleDatabase::getComplianceColor(double value) {
     else {
         return QColor("red");    // exceeding safe levels
     }
+}
+
+QChartView* WaterSampleDatabase::createPOPLevelsChart(const QString& pollutantName) {
+    QSqlQuery query(db);
+    // Group by samplingPointNotation and order by sampleDateTime
+    query.prepare("SELECT samplingPointNotation, sampleDateTime, resultQualifierNotation, result, unitLabel FROM water_samples WHERE determinandLabel = :pollutantName ORDER BY samplingPointNotation, sampleDateTime");
+    query.bindValue(":pollutantName", pollutantName);
+
+    // execute query
+    if (!query.exec()) {
+        qDebug() << "Query failed£º" << query.lastError();
+        return nullptr;
+    }
+
+    // Create chart
+    QChart* chart = new QChart();
+
+    // Create a map to store series for each samplingPointNotation
+    QMap<QString, QLineSeries*> seriesMap;
+
+    // Query for data and add to series
+    while (query.next()) {
+        QString samplingPointNotation = query.value(0).toString();
+        QDateTime sampleDateTime = QDateTime::fromString(query.value(1).toString(), "yyyy-MM-ddTHH:mm:ss");
+        qDebug() << "Sample DateTime: " << sampleDateTime.toString();
+        double result = query.value(3).toDouble();
+
+        // If a series for this samplingPointNotation does not exist, create one
+        if (!seriesMap.contains(samplingPointNotation)) {
+            seriesMap[samplingPointNotation] = new QLineSeries();
+        }
+
+        // Append the data point to the appropriate series
+        seriesMap[samplingPointNotation]->append(sampleDateTime.toMSecsSinceEpoch(), result);
+    }
+
+    // Add all series to the chart
+    for (auto series : seriesMap) {
+        chart->addSeries(series);
+    }
+
+    chart->createDefaultAxes();
+    chart->setTitle("Pollutant Trend: " + pollutantName);
+
+    // Set chart view and return 
+    QChartView* chartView = new QChartView(chart);
+
+    return chartView;
 }

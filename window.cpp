@@ -27,7 +27,7 @@ void WaterSampleWindow::createWidgets() {
     CD = new ComplianceDashboard(this);
     PO = new PollutantOverview(db,this);
     POPsTab = new POPs(db, this);
-    ELI = new EnvironmentalLitterIndicators(this);
+    ELI = new EnvironmentalLitterIndicators(db, this);
     FC = new FluorinatedCompounds(this);
 
 }
@@ -93,6 +93,7 @@ void WaterSampleWindow::connectSlots() {
     // Wait to edit
     connect(this, &WaterSampleWindow::dbUpdated, PO, &PollutantOverview::updateChart);
     connect(this, &WaterSampleWindow::dbUpdated, POPsTab, &POPs::updateChart);
+    connect(this, &WaterSampleWindow::dbUpdated, ELI, &EnvironmentalLitterIndicators::updateChart);
 }
 
 void WaterSampleWindow::loadCSV() {

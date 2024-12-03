@@ -1,26 +1,17 @@
 #pragma once
 
 #include <QWidget>
-
-class QVBoxLayout;
-class QLabel;
+#include "database.hpp"
 
 class EnvironmentalLitterIndicators : public QWidget {
-    Q_OBJECT
 
 public:
-    EnvironmentalLitterIndicators(QWidget* parent = nullptr);
-    // Add all your public methods here
-    // Remenber to delete the brackets and write the method in cpp file
-    void createWidgets() {};
-    void arrangeWidgets() {};
+    EnvironmentalLitterIndicators(WaterSampleDatabase* database, QWidget* parent = nullptr);
+public slots:
+    void updateChart(); // 更新图表槽函数
 
 private:
-    // Create all your widgets here
-
-    // Add all your private methods here
-
-private slots:
-    // connect all slots here, you can do it later
-    void connectSlots() {};
+    WaterSampleDatabase* db; // 共享的数据库对象
+    QLabel* infoLabel;
+    QChartView* chartView;
 };
