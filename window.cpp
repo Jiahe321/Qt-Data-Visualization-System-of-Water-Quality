@@ -2,6 +2,8 @@
 
 WaterSampleWindow::WaterSampleWindow(QWidget* parent)
     : QMainWindow(parent), dbFilePath("water_samples.db"), csvFilePath("") {
+    // shared db
+    db = new WaterSampleDatabase(dbFilePath.toStdString());
     createWidgets();
     arrangeWidgets();
     connectSlots();
@@ -23,10 +25,11 @@ void WaterSampleWindow::createWidgets() {
 
     dataPage = new QWidget();
     CD = new ComplianceDashboard(this);
-    PO = new PollutantOverview(this);
-    POPsTab = new POPs(this);
+    PO = new PollutantOverview(db,this);
+    POPsTab = new POPs(db, this);
     ELI = new EnvironmentalLitterIndicators(this);
     FC = new FluorinatedCompounds(this);
+
 }
 
 void WaterSampleWindow::arrangeWidgets() {
@@ -88,6 +91,8 @@ void WaterSampleWindow::setStatusBarAndMenuBar() {
 
 void WaterSampleWindow::connectSlots() {
     // Wait to edit
+    connect(this, &WaterSampleWindow::dbUpdated, PO, &PollutantOverview::updateChart);
+    connect(this, &WaterSampleWindow::dbUpdated, POPsTab, &POPs::updateChart);
 }
 
 void WaterSampleWindow::loadCSV() {
@@ -101,14 +106,13 @@ void WaterSampleWindow::loadCSV() {
     }
 
     // Database operations
-    WaterSampleDatabase db(dbFilePath.toStdString());
-    if (!db.createTable()) {
+    if (!db->createTable()) {
         QMessageBox::critical(this, "Error", "Failed to create or verify the database table.");
         return;
     }
 
-    if (db.readCSV(csvFilePath.toStdString())) {
-        tableView->setModel(db.getTableModel());
+    if (db->readCSV(csvFilePath.toStdString())) {
+        tableView->setModel(db->getTableModel());
         statusBar()->showMessage("CSV data loaded successfully.");
         // Inform other pages that the database has been updated
         emit dbUpdated();

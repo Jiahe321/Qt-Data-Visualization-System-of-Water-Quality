@@ -55,6 +55,9 @@ private:
     QVBoxLayout* dataLayout;
     QWidget* dataPage;
     QLineEdit* searchInput;
+    
+    // Database
+    WaterSampleDatabase* db;
 
     void createWidgets();
     void arrangeWidgets();

@@ -162,3 +162,68 @@ bool WaterSampleDatabase::stringToBool(const std::string& str) {
     if (str == "FALSE" || str == "false") return false;
     throw std::invalid_argument("Invalid boolean value: " + str);
 }
+
+QChartView* WaterSampleDatabase::createPollutantTrendChart(const QString& pollutantName) {
+    // Create SQL query
+    QSqlQuery query(db);
+    query.prepare("SELECT sampleDateTime, resultQualifierNotation, result, unitLabel, isComplianceSample FROM water_samples WHERE determinandLabel = :pollutantName ORDER BY sampleDateTime");
+    query.bindValue(":pollutantName", pollutantName);
+
+    // execute query
+    if (!query.exec()) {
+        qDebug() << "Query failed£º" << query.lastError();
+        return nullptr;
+    }
+
+    // Create chart
+    QChart* chart = new QChart();
+
+    QLineSeries* lineSeries = new QLineSeries();
+
+    // Create and set X axis (DateTime axis)
+    QDateTimeAxis* axisX = new QDateTimeAxis();
+    axisX->setFormat("yyyy-MM-dd HH:mm:ss");
+    axisX->setTitleText("DateTime");
+    chart->addAxis(axisX, Qt::AlignBottom);
+    
+    // Create and set Y axis (Value axis)
+    QValueAxis* axisY = new QValueAxis();
+    axisY->setTitleText("Pollutant Level ( unit )");
+    axisY->setLabelFormat("%lf");
+    chart->addAxis(axisY, Qt::AlignLeft);
+
+    // Query for data and add to series
+    while (query.next()) {
+        QDateTime sampleDateTime = QDateTime::fromString(query.value(0).toString(), "yyyy-MM-ddTHH:mm:ss");
+        qDebug() << "Sample DateTime: " << sampleDateTime.toString();
+        double result = query.value(2).toDouble();
+
+        lineSeries->append(sampleDateTime.toMSecsSinceEpoch(), result);
+    }
+
+    // Add series to chart
+    chart->addSeries(lineSeries);
+    lineSeries->attachAxis(axisX);
+    lineSeries->attachAxis(axisY);
+
+    // Set chart title
+    chart->setTitle("Pollutant Trend: " + pollutantName);
+
+    // Set chart view and return 
+    QChartView* chartView = new QChartView(chart);
+
+    return chartView;
+}
+
+// Maybe Useful later
+QColor WaterSampleDatabase::getComplianceColor(double value) {
+    if (value < 50) {
+        return QColor("green");  // safe
+    }
+    else if (value < 100) {
+        return QColor("amber");  // caution
+    }
+    else {
+        return QColor("red");    // exceeding safe levels
+    }
+}
