@@ -1,11 +1,12 @@
 #pragma once
 
 // All other pages for the tab
-#include "ComplianceDashboard.hpp"
-#include "PollutantOverview.hpp"
-#include "POPs.hpp"
-#include "EnvironmentalLitterIndicators.hpp"
-#include "FluorinatedCompounds.hpp"
+#include "Pages/ComplianceDashboard.hpp"
+#include "Pages/PollutantOverview.hpp"
+#include "Pages/POPs.hpp"
+#include "Pages/EnvironmentalLitterIndicators.hpp"
+#include "Pages/FluorinatedCompounds.hpp"
+#include "Pages/GeographicalHotspots.hpp"
 // Data source
 #include "database.hpp"
 
@@ -50,6 +51,7 @@ private:
     POPs* POPsTab;
     EnvironmentalLitterIndicators* ELI;
     FluorinatedCompounds* FC;
+    GeographicalHotspots* GHS;
 
     // ²âÊÔËÑË÷¹¦ÄÜ
     QVBoxLayout* dataLayout;
@@ -65,6 +67,7 @@ private:
     void setDataPage();
     void setTabs();
     void setStatusBarAndMenuBar();
+    void about();
 
 private slots:
     void loadCSV();

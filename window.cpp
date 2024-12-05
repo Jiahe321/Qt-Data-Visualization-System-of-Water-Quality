@@ -7,7 +7,7 @@ WaterSampleWindow::WaterSampleWindow(QWidget* parent)
     createWidgets();
     arrangeWidgets();
     connectSlots();
-    setWindowTitle("Water Sample Data");
+    setWindowTitle(tr("Water Sample Data"));
 }
 
 void WaterSampleWindow::createWidgets() {
@@ -24,12 +24,12 @@ void WaterSampleWindow::createWidgets() {
     tabWidget = new QTabWidget();
 
     dataPage = new QWidget();
-    CD = new ComplianceDashboard(this);
+    CD = new ComplianceDashboard(db,this);
     PO = new PollutantOverview(db,this);
     POPsTab = new POPs(db, this);
     ELI = new EnvironmentalLitterIndicators(db, this);
-    FC = new FluorinatedCompounds(this);
-
+    FC = new FluorinatedCompounds(db, this);
+    GHS = new GeographicalHotspots(db, this);
 }
 
 void WaterSampleWindow::arrangeWidgets() {
@@ -48,9 +48,9 @@ void WaterSampleWindow::setDataPage() {
 
     // ²âÊÔËÑË÷¹¦ÄÜ
     QHBoxLayout* searchLayout = new QHBoxLayout();
-    QLabel* searchLabel = new QLabel("Search by Determinand Label:");
+    QLabel* searchLabel = new QLabel(tr("Search by Determinand Label:"));
     searchInput = new QLineEdit();
-    QPushButton* searchButton = new QPushButton("Search");
+    QPushButton* searchButton = new QPushButton(tr("Search"));
     searchLayout->addWidget(searchLabel);
     searchLayout->addWidget(searchInput);
     searchLayout->addWidget(searchButton);
@@ -65,12 +65,13 @@ void WaterSampleWindow::setDataPage() {
 }
 
 void WaterSampleWindow::setTabs() {
-    tabWidget->addTab(dataPage, "Data View");
-    tabWidget->addTab(PO, "Pollutant Overview");
-    tabWidget->addTab(POPsTab, "Persistent Organic Pollutants (POPs)");
-    tabWidget->addTab(ELI, "Environmental Litter Indicators");
-    tabWidget->addTab(FC, "Fluorinated Compounds");
-    tabWidget->addTab(CD, "Compliance Dashboard");
+    tabWidget->addTab(dataPage, tr("Data View"));
+    tabWidget->addTab(PO, tr("Pollutant Overview"));
+    tabWidget->addTab(POPsTab, tr("Persistent Organic Pollutants (POPs)"));
+    tabWidget->addTab(ELI, tr("Environmental Litter Indicators"));
+    tabWidget->addTab(FC, tr("Fluorinated Compounds"));
+    tabWidget->addTab(CD, tr("Compliance Dashboard"));
+    tabWidget->addTab(GHS, tr("Geographical Hotspots"));
 
     // Add TabWidget to the main layout
     mainLayout->addWidget(tabWidget);
@@ -83,10 +84,44 @@ void WaterSampleWindow::setStatusBarAndMenuBar() {
     statusBar->showMessage("Ready");
 
     // Create Menu Bar
-    QMenu* fileMenu = menuBar()->addMenu("File");
-    QAction* loadCSVAction = new QAction("Load CSV", this);
+    // File menu
+    QMenu* fileMenu = menuBar()->addMenu(tr("File"));
+    QAction* loadCSVAction = new QAction(tr("Load CSV"), this);
+    loadCSVAction->setShortcut(QKeySequence::Open);
+    loadCSVAction->setStatusTip(tr("Load CSV data into the database"));
     connect(loadCSVAction, &QAction::triggered, this, &WaterSampleWindow::loadCSV);
     fileMenu->addAction(loadCSVAction);
+
+    QAction* close = new QAction(tr("Quit"), this);
+    close->setShortcut(QKeySequence::Close);
+    close->setStatusTip(tr("Quit the application"));
+    connect(close, &QAction::triggered, this, &WaterSampleWindow::close);
+    fileMenu->addAction(close);
+
+    // Help menu
+    QMenu* helpMenu = menuBar()->addMenu(tr("Help"));
+
+    QAction* aboutAction = new QAction(tr("&About"), this);
+    // TODO: set shortcut
+    // aboutAction->setShortcut(QKeySequence::HelpContents);
+    aboutAction->setStatusTip(tr("Show information about this application"));
+    connect(aboutAction, &QAction::triggered, this, &WaterSampleWindow::about);
+    helpMenu->addAction(aboutAction);
+
+    QAction* aboutQtAction = new QAction(tr("About &Qt"), this);
+    // TODO: set shortcut
+    // aboutQtAction->setShortcut(QKeySequence::AboutQt);
+    aboutQtAction->setStatusTip(tr("Show information about the Qt library"));
+    connect(aboutQtAction, &QAction::triggered, qApp, &QApplication::aboutQt);
+    helpMenu->addAction(aboutQtAction);
+}
+
+// Slot implementation for About
+void WaterSampleWindow::about() {
+    QMessageBox::about(this, "About <> Application",
+        "line "
+        "line"
+        "line");
 }
 
 void WaterSampleWindow::connectSlots() {
@@ -94,32 +129,35 @@ void WaterSampleWindow::connectSlots() {
     connect(this, &WaterSampleWindow::dbUpdated, PO, &PollutantOverview::updateChart);
     connect(this, &WaterSampleWindow::dbUpdated, POPsTab, &POPs::updateChart);
     connect(this, &WaterSampleWindow::dbUpdated, ELI, &EnvironmentalLitterIndicators::updateChart);
+	connect(this, &WaterSampleWindow::dbUpdated, CD, &ComplianceDashboard::updateChart);
+	connect(this, &WaterSampleWindow::dbUpdated, FC, &FluorinatedCompounds::updateChart);
+    // connect(this, &WaterSampleWindow::dbUpdated, GHS, &GeographicalHotspots::updateGraph);
 }
 
 void WaterSampleWindow::loadCSV() {
     // Open a file dialog to select the CSV file
     csvFilePath = QFileDialog::getOpenFileName(
-        this, "Select CSV File", QString(), "CSV Files (*.csv)");
+        this, tr("Select CSV File"), QString(), tr("CSV Files (*.csv)"));
 
     if (csvFilePath.isEmpty()) {
-        QMessageBox::warning(this, "Error", "No file selected.");
+        QMessageBox::warning(this, tr("Error"), tr("No file selected."));
         return;
     }
 
     // Database operations
     if (!db->createTable()) {
-        QMessageBox::critical(this, "Error", "Failed to create or verify the database table.");
+        QMessageBox::critical(this, tr("Error"), tr("Failed to create or verify the database table."));
         return;
     }
 
     if (db->readCSV(csvFilePath.toStdString())) {
         tableView->setModel(db->getTableModel());
-        statusBar()->showMessage("CSV data loaded successfully.");
+        statusBar()->showMessage(tr("CSV data loaded successfully."));
         // Inform other pages that the database has been updated
         emit dbUpdated();
     }
     else {
-        QMessageBox::critical(this, "Error", "Error loading CSV data.");
+        QMessageBox::critical(this, tr("Error"), tr("Error loading CSV data."));
     }
 }
 
@@ -132,9 +170,9 @@ void WaterSampleWindow::searchData() {
 
     if (filteredModel) {
         tableView->setModel(filteredModel); // Update the TableView with the filtered model
-        statusBar()->showMessage(filterLabel.isEmpty() ? "Showing all data" : "Filtered by: " + filterLabel);
+        statusBar()->showMessage(filterLabel.isEmpty() ? tr("Showing all data") : tr("Filtered by: ") + filterLabel);
     }
     else {
-        QMessageBox::warning(this, "Error", "No data found for the given filter.");
+        QMessageBox::warning(this, tr("Error"), tr("No data found for the given filter."));
     }
 }

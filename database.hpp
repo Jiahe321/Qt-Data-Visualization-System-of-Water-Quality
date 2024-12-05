@@ -23,6 +23,10 @@ public:
     QChartView* createPollutantTrendChart(const QString& pollutantName);
     QChartView* createPOPLevelsChart(const QString& pollutantName);
     QChartView* createELIChart(const QString& pollutantName){return nullptr;}
+    QChartView* createComplianceChart(const QString& pollutantName);
+    QChartView* createFCChart(const QString& pollutantName){return nullptr;}
+    // ¸øµØÍ¼
+    auto getGeoPoints() { return NULL; }
 
 private:
     void clearDatabase();

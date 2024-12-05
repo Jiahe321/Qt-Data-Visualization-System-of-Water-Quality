@@ -166,12 +166,17 @@ bool WaterSampleDatabase::stringToBool(const std::string& str) {
 QChartView* WaterSampleDatabase::createPollutantTrendChart(const QString& pollutantName) {
     // Create SQL query
     QSqlQuery query(db);
-    query.prepare("SELECT sampleDateTime, resultQualifierNotation, result, unitLabel, isComplianceSample FROM water_samples WHERE determinandLabel = :pollutantName ORDER BY sampleDateTime");
+    query.prepare(R"(
+        SELECT sampleDateTime, result 
+        FROM water_samples 
+        WHERE determinandLabel = :pollutantName 
+        ORDER BY sampleDateTime
+    )");
     query.bindValue(":pollutantName", pollutantName);
 
-    // execute query
+    // Execute query
     if (!query.exec()) {
-        qDebug() << "Query failed：" << query.lastError();
+        qDebug() << "Query failed:" << query.lastError();
         return nullptr;
     }
 
@@ -182,40 +187,40 @@ QChartView* WaterSampleDatabase::createPollutantTrendChart(const QString& pollut
     // Query for data and add to series
     while (query.next()) {
         QDateTime sampleDateTime = QDateTime::fromString(query.value(0).toString(), "yyyy-MM-ddTHH:mm:ss");
-        qDebug() << "Sample DateTime: " << sampleDateTime.toString();
-        double result = query.value(2).toDouble();
-
-        lineSeries->append(sampleDateTime.toMSecsSinceEpoch(), result);
+        if (sampleDateTime.isValid()) {
+            double result = query.value(1).toDouble();
+            lineSeries->append(sampleDateTime.toMSecsSinceEpoch(), result);
+        }
     }
 
     // Add series to chart
     chart->addSeries(lineSeries);
 
-    chart->createDefaultAxes();
-    // Create and set X axis (DateTime axis)
-    /*
+    // why not working！！！！！！！为什么！！！！！！why！！！！！
+    // Configure X-axis as QDateTimeAxis
     QDateTimeAxis* axisX = new QDateTimeAxis();
     axisX->setFormat("yyyy-MM-dd HH:mm:ss");
-    axisX->setTitleText("DateTime");
+    axisX->setTitleText("Time");
+    axisX->setTickCount(10); // Adjust tick count as needed
     chart->addAxis(axisX, Qt::AlignBottom);
-
-    // Create and set Y axis (Value axis)
-    QValueAxis* axisY = new QValueAxis();
-    axisY->setTitleText("Pollutant Level ( unit )");
-    axisY->setLabelFormat("%lf");
-    chart->addAxis(axisY, Qt::AlignLeft);
-
     lineSeries->attachAxis(axisX);
-    lineSeries->attachAxis(axisY);*/
+
+    // Configure Y-axis
+    QValueAxis* axisY = new QValueAxis();
+    axisY->setTitleText("Result");
+    chart->addAxis(axisY, Qt::AlignLeft);
+    lineSeries->attachAxis(axisY);
 
     // Set chart title
     chart->setTitle("Pollutant Trend: " + pollutantName);
 
-    // Set chart view and return 
+    // Create chart view
     QChartView* chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
 
     return chartView;
 }
+
 
 // Maybe Useful later
 QColor WaterSampleDatabase::getComplianceColor(double value) {
@@ -275,5 +280,75 @@ QChartView* WaterSampleDatabase::createPOPLevelsChart(const QString& pollutantNa
     // Set chart view and return 
     QChartView* chartView = new QChartView(chart);
 
+    return chartView;
+}
+
+//代码是错的。应该显示所有污染物的合规情况（我们默认一种污染物的合规情况只有一种），然后可以按地区分类筛选出该地区的污染物
+QChartView* WaterSampleDatabase::createComplianceChart(const QString& determinand) {
+    // Create a chart
+    QChart* chart = new QChart();
+    chart->setTitle("Regulatory Compliance Overview for " + determinand);
+
+    // Create bar sets for compliant and non-compliant counts
+    QBarSet* compliantSet = new QBarSet("Compliant");
+    QBarSet* nonCompliantSet = new QBarSet("Non-Compliant");
+
+    // Execute query to get compliance data for the given determinand, grouped by samplingPointNotation
+
+    QSqlQuery query;
+    query.prepare(R"(
+        SELECT 
+            samplingPointNotation, 
+            SUM(CASE WHEN isComplianceSample = 1 THEN 1 ELSE 0 END) AS compliant,
+            SUM(CASE WHEN isComplianceSample = 0 THEN 1 ELSE 0 END) AS nonCompliant
+        FROM water_samples
+        WHERE determinandLabel = :determinand
+        GROUP BY samplingPointNotation
+    )");
+    query.bindValue(":determinand", determinand);
+
+    if (!query.exec()) {
+        qDebug() << "Failed to execute query:" << query.lastError();
+        delete chart;
+        return nullptr;
+    }
+
+    // Prepare data for the chart
+    QStringList categories; // Sampling point notations
+    while (query.next()) {
+        QString samplingPointNotation = query.value("samplingPointNotation").toString();
+        int compliant = query.value("compliant").toInt();
+        int nonCompliant = query.value("nonCompliant").toInt();
+
+        categories << samplingPointNotation;
+        *compliantSet << compliant;
+        *nonCompliantSet << nonCompliant;
+    }
+
+    // Add data to a bar series
+    QBarSeries* series = new QBarSeries();
+    series->append(compliantSet);
+    series->append(nonCompliantSet);
+    chart->addSeries(series);
+
+    // Add category axis for sampling point notations
+    QBarCategoryAxis* axisX = new QBarCategoryAxis();
+    axisX->append(categories);
+    chart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+
+    // Add numeric axis for count
+    QValueAxis* axisY = new QValueAxis();
+    axisY->setTitleText("Sample Count");
+    chart->addAxis(axisY, Qt::AlignLeft);
+    series->attachAxis(axisY);
+
+    // Customize chart appearance
+    chart->legend()->setVisible(true);
+    chart->legend()->setAlignment(Qt::AlignBottom);
+
+    // Create and return a QChartView
+    QChartView* chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
     return chartView;
 }
