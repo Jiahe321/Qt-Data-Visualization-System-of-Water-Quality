@@ -33,5 +33,11 @@ My compiler did not report any errors. If your compiler reports an error, just m
 - Add a method `createPollutantTrendChart` into `Methods` class. Only show data in chart, need more change to meet the coursework requirement.
 - Try to apply this method in `pollutant overview` pages. Problem: chart cannot update after loading file.
 - Try to emit a signal `dbUpdated` from `window.cpp` after database updated. This signal is not used yet.
-- 
+
+
+# Lin, updated at 2024/12/5
+## Some changes
+- File structure changed. More clear to access to different code.
+- Internationalization half down.
+- Try to implement qml map for the Geographical Hotspots Page.
 -- Write your log here --
